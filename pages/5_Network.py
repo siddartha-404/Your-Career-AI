@@ -13,6 +13,10 @@ from core.cache import force_clear_cache
 if not st.session_state.get("authenticated", False):
     st.switch_page("app.py")
 
+# --- INITIALIZE ROUND ROBIN STATE ---
+if "serper_index" not in st.session_state:
+    st.session_state.serper_index = 0
+    
 user_id = st.session_state["user"].id
 
 

@@ -5,14 +5,11 @@ import joblib
 from core.database import supabase
 from utils.engine import get_gemini_response
 from core.auth import logout_user
-from core.auth import logout_user
 from core.cache import force_clear_cache
-
 
 # 1. Security Check
 if not st.session_state.get("authenticated", False):
     st.switch_page("app.py")
-
 
 # 2. Unified Custom Sidebar Navigation
 with st.sidebar:
@@ -63,15 +60,30 @@ except Exception as e:
 
 categories = ['DSA', 'OOPS', 'DBMS', 'OS', 'System Design']
 user_values = [
-    user_skills['dsa'], user_skills['oops'], user_skills['dbms'], 
-    user_skills['os'], user_skills['system_design']
+    user_skills.get('dsa', 1), user_skills.get('oops', 1), user_skills.get('dbms', 1), 
+    user_skills.get('os', 1), user_skills.get('system_design', 1)
 ]
 
 # 4. Target Input
 target_job = st.text_input("Where do you want to go next?", value=user_profile.get('target_role', 'SDE'))
 
 if target_job:
-    target_values = [5, 4, 4, 4, 5] if "SDE" in target_job.upper() or "GOOGLE" in target_job.upper() else [4, 4, 4, 3, 3]
+    # --- DYNAMIC TARGET MAPPING LOGIC ---
+    job_upper = target_job.upper()
+    if "FRONTEND" in job_upper or "UI" in job_upper:
+        target_values = [3, 3, 2, 2, 3] 
+    elif "BACKEND" in job_upper:
+        target_values = [4, 4, 5, 4, 4] 
+    elif "DATA" in job_upper or "ML" in job_upper or "AI" in job_upper:
+        target_values = [4, 3, 4, 3, 3] 
+    elif "DEVOPS" in job_upper or "CLOUD" in job_upper:
+        target_values = [3, 3, 4, 5, 4] 
+    elif "FULL STACK" in job_upper:
+        target_values = [4, 4, 4, 3, 4]
+    elif "SDE" in job_upper or "GOOGLE" in job_upper or "MICROSOFT" in job_upper:
+        target_values = [5, 4, 4, 4, 5]
+    else:
+        target_values = [4, 4, 4, 3, 3] # Default Baseline
 
     col1, col2 = st.columns([1, 1])
     
@@ -129,21 +141,25 @@ if target_job:
             
             gaps = {cat: (tgt - usr) for cat, usr, tgt in zip(categories, user_values, target_values) if tgt > usr}
             
+            # Show a success message if they are strong, but DO NOT hide the button
             if not gaps:
-                st.success("Your fundamentals match or exceed the requirements. Time to focus on project execution.")
+                st.success("Your fundamentals match or exceed the requirements. Time to focus on advanced project execution.")
+                gap_str = "None. Fundamentals are strong. Focus strictly on advanced project building and system design."
             else:
-                if st.button("Generate Action Plan", type="primary", use_container_width=True):
-                    with st.spinner("Compiling personalized roadmap..."):
-                        gap_str = ", ".join([f"{k} (-{v})" for k, v in gaps.items()])
+                gap_str = ", ".join([f"{k} (-{v})" for k, v in gaps.items()])
+                
+            # The button is now outside the if/else block. It always renders.
+            if st.button("Generate Action Plan", type="primary", use_container_width=True):
+                with st.spinner("Compiling personalized roadmap..."):
+                    
+                    prompt = f"User aims for '{target_job}'. Gaps: {gap_str}. Strategy: {strategy}. Timeline: {timeline} months. Generate a strict markdown checklist to advance their career. If there are no gaps, generate an advanced project roadmap. Keep it under 10 lines."
+                    
+                    # Inject past iterative feedback if it exists
+                    if st.session_state.refinement_history:
+                        prompt += f"\n\nCRITICAL INSTRUCTION - Adjust the output based on this user feedback: {st.session_state.refinement_history[-1]}"
                         
-                        prompt = f"User aims for '{target_job}'. Gaps: {gap_str}. Strategy: {strategy}. Timeline: {timeline} months. Generate a strict markdown checklist to close these gaps. Keep it under 10 lines."
-                        
-                        # Inject past iterative feedback if it exists
-                        if st.session_state.refinement_history:
-                            prompt += f"\n\nCRITICAL INSTRUCTION - Adjust the output based on this user feedback: {st.session_state.refinement_history[-1]}"
-                            
-                        st.session_state.current_roadmap = get_gemini_response(prompt)
-                        st.rerun()
+                    st.session_state.current_roadmap = get_gemini_response(prompt)
+                    st.rerun()
 
 # --- POST-GENERATION ITERATIVE FEEDBACK LOOP ---
 if st.session_state.current_roadmap:
@@ -168,6 +184,7 @@ if st.session_state.current_roadmap:
                     st.success("Roadmap saved and feedback logged to database!")
                     st.session_state.current_roadmap = None # Clear memory for next task
                     st.session_state.refinement_history = []
+                    st.rerun()
                 except Exception as e:
                     st.error(f"DB Error: {e}")
                     
