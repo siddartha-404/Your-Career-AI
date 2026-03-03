@@ -22,6 +22,7 @@ with st.sidebar:
     st.page_link("pages/3_Skill_Gap.py", label="Skill Gap Analyzer", icon="📊")
     st.page_link("pages/4_Scorecard.py", label="Viral Scorecard", icon="🔥")
     st.page_link("pages/5_Network.py", label="Connection Hub", icon="🤝")
+    st.page_link("pages/6_Profile.py", label="Edit Profile", icon="👤")
     st.divider()
     
     # The Manual Clear Cache Button

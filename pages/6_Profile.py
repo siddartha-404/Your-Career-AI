@@ -2,6 +2,7 @@ import streamlit as st
 import time
 from core.database import supabase
 from core.auth import logout_user
+from core.cache import force_clear_cache
 
 # 1. Security Check
 if not st.session_state.get("authenticated", False):
@@ -17,8 +18,15 @@ with st.sidebar:
     st.page_link("pages/3_Skill_Gap.py", label="Skill Gap Analyzer", icon="📊")
     st.page_link("pages/4_Scorecard.py", label="Viral Scorecard", icon="🔥")
     st.page_link("pages/5_Network.py", label="Connection Hub", icon="🤝")
-    st.page_link("pages/6_Profile.py", label="Profile Settings", icon="⚙️")
+    st.page_link("pages/6_Profile.py", label="Edit Profile", icon="👤")
     st.divider()
+
+    # The Manual Clear Cache Button
+    if st.button("🔄 Sync Data (Clear Cache)", use_container_width=True):
+        force_clear_cache()
+        st.success("Cache cleared. Data synced.")
+        st.rerun()
+
     st.button("Logout", on_click=logout_user, use_container_width=True)
 
 st.title("⚙️ Profile & Skill Settings")
