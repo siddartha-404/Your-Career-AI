@@ -73,3 +73,4 @@ Run the Streamlit server to launch the platform.
 ```bash
 streamlit run app.py
 ```
+
