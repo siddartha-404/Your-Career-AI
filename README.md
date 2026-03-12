@@ -74,3 +74,8 @@ Run the Streamlit server to launch the platform.
 streamlit run app.py
 ```
 
+
+**Contributors:**
+This project was a collaborative effort by **@shanmukha-sasi(https://github.com/shanmukha-sasi)** and 
+**@siddartha-404(https://github.com/siddartha-404)**. We utilized pair-programming for the entire development process.
+
